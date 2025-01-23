@@ -38,11 +38,51 @@
         right: 0;
         margin: auto;
     }
+
+    /* Add to existing styles */
+    #planet-labels div {
+        background: rgba(0,0,0,0.5);
+        padding: 5px;
+        border-radius: 3px;
+        pointer-events: none;
+    }
 </style>
 </head>
 
 <body>
+    <div id="loading-screen" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+         background: black; color: white; display: flex; align-items: center; justify-content: center;
+         font-family: Arial; z-index: 1000;">
+        <div>
+            <h1>Loading Solar System...</h1>
+            <div class="progress-bar" style="width: 300px; height: 20px; border: 1px solid white;">
+                <div id="progress" style="width: 0%; height: 100%; background: white; transition: width 0.3s;"></div>
+            </div>
+        </div>
+    </div>
+
     <canvas id="webgl-canvas" width="768" height="512"></canvas>
+
+    <!-- Add after the canvas -->
+    <div id="planet-labels" style="position: absolute; color: white; font-family: Arial;">
+        <div id="mercury-label" style="position: absolute;">Mercury</div>
+        <div id="venus-label" style="position: absolute;">Venus</div>
+        <div id="earth-label" style="position: absolute;">Earth</div>
+        <div id="mars-label" style="position: absolute;">Mars</div>
+        <div id="jupiter-label" style="position: absolute;">Jupiter</div>
+        <div id="saturn-label" style="position: absolute;">Saturn</div>
+        <div id="uranus-label" style="position: absolute;">Uranus</div>
+        <div id="neptune-label" style="position: absolute;">Neptune</div>
+    </div>
+
+    <!-- Add after canvas -->
+    <div id="controls" style="position: fixed; bottom: 20px; left: 20px; color: white; 
+         background: rgba(0,0,0,0.7); padding: 10px; border-radius: 5px;">
+        <div>Space: Pause/Resume</div>
+        <div>+/-: Adjust Speed</div>
+        <div>Mouse: Orbit Camera</div>
+        <div>Scroll: Zoom</div>
+    </div>
 </body>
 
 </html>

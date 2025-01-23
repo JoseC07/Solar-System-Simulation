@@ -45,6 +45,26 @@ var loadedAssets = {
     barrelJSON: null, barrelImage: null
 };
 
+// Add to top of file
+var isPaused = false;
+var orbitSpeed = 1.0;
+
+// Add event listeners
+document.addEventListener('keydown', function(e) {
+    switch(e.key) {
+        case ' ': // Space bar
+            isPaused = !isPaused;
+            break;
+        case '+':
+        case '=':
+            orbitSpeed = Math.min(orbitSpeed * 1.5, 5.0);
+            break;
+        case '-':
+            orbitSpeed = Math.max(orbitSpeed * 0.75, 0.1);
+            break;
+    }
+});
+
 // -------------------------------------------------------------------------
 function initializeAndStartRendering() {
     initGL();
@@ -95,7 +115,15 @@ function loadAssets(onLoadedCB) {
         fetch('./shaders/flat.color.fs.glsl').then((response) => { return response.text(); })
     ];
 
-    Promise.all(filePromises).then(function(values) {
+    let loadedCount = 0;
+    const totalAssets = filePromises.length;
+    
+    Promise.all(filePromises.map(p => p.then(result => {
+        loadedCount++;
+        document.getElementById('progress').style.width = 
+            `${(loadedCount/totalAssets) * 100}%`;
+        return result;
+    }))).then(values => {
         // Assign loaded data to our named variables
         loadedAssets.phongTextVS = values[0];
         loadedAssets.phongTextFS = values[1];
@@ -114,6 +142,7 @@ function loadAssets(onLoadedCB) {
         loadedAssets.barrelImage = values[14];
         loadedAssets.flatVS = values[15];
         loadedAssets.flatFS = values[16];
+        document.getElementById('loading-screen').style.display = 'none';
     }).catch(function(error) {
         console.error(error.message);
     }).finally(function() {
@@ -394,17 +423,47 @@ function createScene() {
    
     // barrelGeometry.worldMatrix.multiply(translation).multiply(scale); 
     
-    whiteGeometry = new WebGLGeometryJSON(gl, whiteShaderProgram);
-    whiteGeometry.create(loadedAssets.sphereJSON, loadedAssets.venusImage);
-    var scale = new Matrix4().makeScale(0.03, 0.03, 0.03);
+    whiteGeometry = [];
+    for(let i = 0; i < 200; i++) { // Create 200 stars
+        let star = new WebGLGeometryJSON(gl, whiteShaderProgram);
+        star.create(loadedAssets.sphereJSON, loadedAssets.venusImage);
+        
+        // Random positions in space
+        let x = (Math.random() - 0.5) * 100;
+        let y = (Math.random() - 0.5) * 100;
+        let z = (Math.random() - 0.5) * 100;
+        
+        let scale = new Matrix4().makeScale(0.05, 0.05, 0.05);
+        let translation = new Matrix4().makeTranslation(x, y, z);
+        
+        star.worldMatrix.makeIdentity();
+        star.worldMatrix.multiply(translation).multiply(scale);
+        whiteGeometry.push(star);
+    }
 
-    // raise it by the radius to make it sit on the ground
-    var translation = new Matrix4().makeTranslation(0, 1.5, 0);
+    // Add after your geometry declarations
+    var orbitTrails = [];
 
-    whiteGeometry.worldMatrix.makeIdentity();
-    whiteGeometry.worldMatrix.multiply(translation).multiply(scale);
+    // In createScene(), add for each planet:
+    function createOrbitTrail(radius) {
+        let points = [];
+        const segments = 64;
+        for(let i = 0; i <= segments; i++) {
+            let theta = (i / segments) * Math.PI * 2;
+            points.push(
+                radius * Math.cos(theta),
+                0,
+                radius * Math.sin(theta)
+            );
+        }
+        // Create trail geometry using points
+        // Return trail object
+    }
 
-    
+    // Add trails for each planet
+    orbitTrails.push(createOrbitTrail(3)); // Mercury
+    orbitTrails.push(createOrbitTrail(5)); // Venus
+    // etc...
 }
 
 // -------------------------------------------------------------------------
@@ -415,57 +474,57 @@ function updateAndRender() {
 
     
   //------------------------//
-    var rotation = new Matrix4().makeRotationY(1);
+    var rotation = new Matrix4().makeRotationY(1 * orbitSpeed);
     venusGeometry.worldMatrix.multiply(rotation);
 
     var translation = new Matrix4().makeTranslation(0, 0,10)
     venusGeometry.worldMatrix.multiply(translation);
   //------------------------//
-    var rotation = new Matrix4().makeRotationY(0.8);
+    var rotation = new Matrix4().makeRotationY(0.8 * orbitSpeed);
     mercuryGeometry.worldMatrix.multiply(rotation);
 
     var translation = new Matrix4().makeTranslation(0, 0,10)
     mercuryGeometry.worldMatrix.multiply(translation);
       //------------------------//
     
-    var rotation = new Matrix4().makeRotationY(1.2);
+    var rotation = new Matrix4().makeRotationY(1.2 * orbitSpeed);
    earthGeometry.worldMatrix.multiply(rotation);
 
     var translation = new Matrix4().makeTranslation(0, 0,18)
     earthGeometry.worldMatrix.multiply(translation);
       //------------------------//
-    var rotation = new Matrix4().makeRotationY(0.4);
+    var rotation = new Matrix4().makeRotationY(0.4 * orbitSpeed);
     neptuneGeometry.worldMatrix.multiply(rotation);
 
     var translation = new Matrix4().makeTranslation(0, 0,15)
     neptuneGeometry.worldMatrix.multiply(translation);
       //------------------------//
-    var rotation = new Matrix4().makeRotationY(0.7);
+    var rotation = new Matrix4().makeRotationY(0.7 * orbitSpeed);
     jupiterGeometry.worldMatrix.multiply(rotation);
 
     var translation = new Matrix4().makeTranslation(0, 0,8.5)
     jupiterGeometry.worldMatrix.multiply(translation);
   //------------------------//
 
-    var rotation = new Matrix4().makeRotationY(0.9);
+    var rotation = new Matrix4().makeRotationY(0.9 * orbitSpeed);
     sphereGeometry.worldMatrix.multiply(rotation);
 
     var translation = new Matrix4().makeTranslation(0, 0,21)
     sphereGeometry.worldMatrix.multiply(translation);
     //------------------------//
-    var rotation = new Matrix4().makeRotationY(0.6);
+    var rotation = new Matrix4().makeRotationY(0.6 * orbitSpeed);
     uranusGeometry.worldMatrix.multiply(rotation);
 
     var translation = new Matrix4().makeTranslation(0, 0,22)
     uranusGeometry.worldMatrix.multiply(translation);
     //------------------------//
-    var rotation = new Matrix4().makeRotationY(0.5);
+    var rotation = new Matrix4().makeRotationY(0.5 * orbitSpeed);
     saturnGeometry.worldMatrix.multiply(rotation);
 
     var translation = new Matrix4().makeTranslation(0, 0,9)
     saturnGeometry.worldMatrix.multiply(translation);
      //------------------------//
-     var rotation = new Matrix4().makeRotationY(1.2);
+     var rotation = new Matrix4().makeRotationY(1.2 * orbitSpeed);
    moonGeometry.worldMatrix.multiply(rotation);
 
     var translation = new Matrix4().makeTranslation(0, 0,75)
@@ -481,7 +540,7 @@ function updateAndRender() {
     gl.viewport(0, 0, gl.canvasWidth, gl.canvasHeight);
 
     // this is a new frame so let's clear out whatever happened last frame
-    gl.clearColor(0.707, 0.707, 1, 1.0);
+    gl.clearColor(0.0, 0.0, 0.1, 1.0); // Deep blue/black space color
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
     gl.useProgram(phongShaderProgram);
@@ -517,5 +576,7 @@ function updateAndRender() {
     gl.uniform1i(uniforms.TimeForWhite, time.secondsElapsedSinceStart);
 
 
-    whiteGeometry.render(camera, projectionMatrix, whiteShaderProgram);
+    for(let i = 0; i < whiteGeometry.length; i++) {
+        whiteGeometry[i].render(camera, projectionMatrix, whiteShaderProgram);
+    }
 }
